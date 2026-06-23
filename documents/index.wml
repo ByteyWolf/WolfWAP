@@ -1,0 +1,41 @@
+<?xml version="1.0"?>
+<!DOCTYPE wml PUBLIC "-//WAPFORUM//DTD WML 1.1//EN" "http://www.wapforum.org/DTD/wml_1.1.xml">
+<wml xml:lang="en">
+    <card id="home" title="WolfNET">
+		<p align="center">Welcome to<br/>
+		<img src="logo.wbmp" alt="WolfWAP"/>
+		<br/>*****<br/></p>
+		<a href="#about">1> About</a><br/>
+		<a href="#news">2> News</a><br/>
+		<a href="#weather">3> Weather</a>
+    </card>
+	<card id="about" title="About">
+		<b>About<br/></b>
+		<p>WolfWAP is designed to be a modern WAP portal for mobile devices.
+		Unfortunately as WAP is a dead technology, all good WAP portals went
+		offline a long time ago. WolfWAP is designed to fill that gap and
+		provide a modern WAP experience with news, weather, and links to
+		relevant services. <br/>
+		<!--</p><b>WolfWAP also hosts a WAP gateway!</b><p><br/>
+		IP: 194.28.198.143
+		Port: 9201</p>-->
+
+		<a href="#home">Home</a>
+	</card>
+	<card id="news" title="News">
+		<p>Please select news source</p>
+		<a href="/news.wml?source=bbc">1> BBC World</a><br/>
+		<a href="/news.wml?source=guard">2> The Guardian</a><br/>
+		<a href="/news.wml?source=ukr">3> Ukrainska Pravda</a><br/>
+		<a href="/">4> Back</a><br/>
+	</card>
+	<card id="weather" title="Weather">
+		<p>Enter city in English (ie. Kyiv)<br/></p>
+		<input name="c" title="City"/>
+		<do type="accept" label="Go">
+			<go href="/weather.wml">
+				<postfield name="c" value="$(c)"/>
+			</go>
+		</do>
+	</card>
+</wml>
