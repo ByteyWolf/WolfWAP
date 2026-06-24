@@ -8,6 +8,7 @@
 		<a href="#about">1> About</a><br/>
 		<a href="#news">2> News</a><br/>
 		<a href="#weather">3> Weather</a>
+		<a href="http://example.com">4> Example.com</a>
     </card>
 	<card id="about" title="About">
 		<b>About<br/></b>
@@ -15,10 +16,10 @@
 		Unfortunately as WAP is a dead technology, all good WAP portals went
 		offline a long time ago. WolfWAP is designed to fill that gap and
 		provide a modern WAP experience with news, weather, and links to
-		relevant services. <br/>
+		relevant services. <br/></p>
 		<!--</p><b>WolfWAP also hosts a WAP gateway!</b><p><br/>
 		IP: 194.28.198.143
-		Port: 9201</p>-->
+		Port: 9201-->
 
 		<a href="#home">Home</a>
 	</card>

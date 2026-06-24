@@ -5,6 +5,7 @@ import feedparser
 from pathlib import Path
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import parse_qs, urlparse
+from translator import resolve_page
 
 def openpage(resource):
     handle = open(resource, "rb")
@@ -222,10 +223,45 @@ def donews(self, source):
     self.wfile.write(body)
 
 
+SELF_HOSTS = {
+    "bytey",
+    "bytey.local",
+    "192.168.1.5",
+    "127.0.0.1",
+    "localhost",
+    "194.28.198.143"
+}
 
 class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
-        if self.path == "/":
+        print("GET", self.path)
+    
+        if self.path.startswith("/HTML2WML"):
+            parsed = urlparse(self.path)
+            params = parse_qs(parsed.query)
+            url = params.get("url", [""])[0]
+
+            if not url:
+                body = b"Missing URL parameter"
+                ctype = "text/plain"
+            elif urlparse(url).hostname in SELF_HOSTS:
+                self.path = urlparse(url).path
+                print("Redirecting to internal path:", self.path)
+            else:
+                try:
+                    wml = resolve_page(url)
+                    body = wml.encode(encoding="utf-8")
+                    ctype = "text/vnd.wap.wml"
+                except Exception as e:
+                    print("Error resolving page:", e)
+                    body = b"Error resolving page"
+                    ctype = "text/plain"
+                self.send_get_response(body, ctype)
+                return
+        
+        print("Not translating, serving static content for path:", self.path)
+
+        if self.path == "/" or self.path == "":
             body = indexWml
             ctype = "text/vnd.wap.wml"
 
@@ -252,12 +288,15 @@ class Handler(BaseHTTPRequestHandler):
                 ctype = "image/vnd.wap.wbmp"
             else:
                 body = b"404"
-                ctype = "text/plain"
+                ctype = "text/plain"            
 
         else:
             body = b"404"
             ctype = "text/plain"
 
+        self.send_get_response(body, ctype)
+
+    def send_get_response(self, body, ctype):
         self.send_response(200)
         self.send_header("Content-Type", ctype)
         self.send_header("Content-Length", str(len(body)))
