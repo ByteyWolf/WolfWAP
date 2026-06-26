@@ -2,10 +2,12 @@ import os
 import time
 import requests
 import feedparser
+from datetime import datetime
+from zoneinfo import ZoneInfo
 from pathlib import Path
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import parse_qs, urlparse
-from translator import resolve_page
+from translator import resolve_page, transliterate
 
 def openpage(resource):
     handle = open(resource, "rb")
@@ -14,6 +16,7 @@ def openpage(resource):
     return data
 
 indexWml = openpage("documents/index.wml")
+index2Wml = openpage("documents/index2.wml")
 weatherWml = openpage("documents/weather.wml")
 weatherErrWml = openpage("documents/weathererr.wml")
 newsWml = openpage("documents/news.wml")
@@ -25,11 +28,7 @@ for file in Path("weathericons").glob("*.wbmp"):
 
 weatherCache:dict[str, list] = {}
 cityCache = {}
-newsCache = {
-    "bbc": [],
-    "guard": [],
-    "ukr": [],
-}
+newsCache = {}
 
 def geocode_city(city):
     city = city.strip().lower()
@@ -55,8 +54,11 @@ def geocode_city(city):
         place = data["results"][0]
         cityCache[city] = {
             "name": place["name"],
+            "country": place["country"],
+            "admin1": place.get("admin1", ""),
             "lat": place["latitude"],
             "lon": place["longitude"],
+            "timezone": place["timezone"],
         }
 
     return cityCache[city]
@@ -78,14 +80,14 @@ def getWeather(city):
             timeout=10,
         )
         r.raise_for_status()
-        data = r.json()["current"]
+        weatherdata = r.json()["current"]
 
         weatherCache[city] = [time.time(), {
-            "temp": data["temperature_2m"],
-            "feels": data["apparent_temperature"],
-            "code": data["weather_code"],
-            "wind": data["wind_speed_10m"],
-
+            "temp": weatherdata["temperature_2m"],
+            "feels": weatherdata["apparent_temperature"],
+            "code": weatherdata["weather_code"],
+            "wind": weatherdata["wind_speed_10m"],
+            "raw": data,
         }]
     return weatherCache[city][1]
 
@@ -136,7 +138,7 @@ def doweather(self, city):
     weather = getWeather(city)
     print(weather)
     if not weather:
-        print("invalid city")
+        print(f"invalid city: {city}")
         body = weatherErrWml
         ctype = "text/vnd.wap.wml"
         self.send_response(200)
@@ -146,8 +148,12 @@ def doweather(self, city):
         self.wfile.write(body)
         return
     
+    local_time = datetime.now(
+        ZoneInfo(weather["raw"]["timezone"])
+    )
+    
     buffer = weatherWml.decode()
-    buffer = buffer.replace("{CITYNAME}", city.upper())
+    buffer = buffer.replace("{CITYNAME}", weather["raw"]["name"].upper())
     buffer = buffer.replace("{WEATHERIMG}", getImgForCode(weather["code"]))
     buffer = buffer.replace("{WEATHERTYPE}", getDescriptionForCode(weather["code"]))
     buffer = buffer.replace("{TEMP_CELSIUS}", str(round(weather["temp"], 1)))
@@ -155,6 +161,7 @@ def doweather(self, city):
     buffer = buffer.replace("{FEEL_CELSIUS}", str(round(weather["feels"], 1)))
     buffer = buffer.replace("{FEEL_FAHRENHEIT}", str(round(weather["feels"] * 9/5 + 32, 1)))
     buffer = buffer.replace("{WINDSPEED}", str(round(weather["wind"], 1)))
+    buffer = buffer.replace("{LOCAL_TIME}", local_time.strftime("%Y-%m-%d %H:%M:%S"))
     body = buffer.encode(encoding="utf-8")
     ctype = "text/vnd.wap.wml"
 
@@ -169,7 +176,7 @@ def doweather(self, city):
 
 def resolve_news_source(source):
     if not source in newsCache:
-        newsCache[source] = [time.time() + 99999, ""]
+        newsCache[source] = [time.time() - 99999, ""]
     
     if time.time() - newsCache[source][0] < 60:
         return newsCache[source][1]
@@ -192,9 +199,15 @@ def resolve_news_source(source):
 
     i = 0
     for entry in feed.entries[:5]:
-        wml += f'<a href="/newsview.wml?s={source}&h={i}">{entry.get("title", "No title")}</a><br/>'
+        title:str = str(entry.get("title", "No title"))
+        link:str = str(entry.get("link", ""))
+        link = link.split("?")[0]
+        if len(title) > 70:
+            title = title[:67] + "..."
+        wml += f'<a href="{link}">{transliterate(title)}</a><br/>'
         i += 1
     newsCache[source] = [time.time(), wml]
+    print("Resolved news source:", source, "with headlines:", wml)
     return wml
 
 def donews(self, source):
@@ -226,10 +239,12 @@ def donews(self, source):
 SELF_HOSTS = {
     "bytey",
     "bytey.local",
+    "iwap.site",
     "192.168.1.5",
     "127.0.0.1",
     "localhost",
-    "194.28.198.143"
+    "194.28.198.143",
+    "openwave.com", # default url on UP.Browser, its not really hosting anything relevant anymore
 }
 
 class Handler(BaseHTTPRequestHandler):
@@ -245,9 +260,15 @@ class Handler(BaseHTTPRequestHandler):
                 body = b"Missing URL parameter"
                 ctype = "text/plain"
             elif urlparse(url).hostname in SELF_HOSTS:
-                self.path = urlparse(url).path
+                query = urlparse(url).query
+                if query:
+                    self.path = urlparse(url).path + "?" + query
+                else:
+                    self.path = urlparse(url).path
                 print("Redirecting to internal path:", self.path)
             else:
+                if not url.startswith("http://") and not url.startswith("https://"):
+                    url = "http://" + url
                 try:
                     wml = resolve_page(url)
                     body = wml.encode(encoding="utf-8")
@@ -261,8 +282,11 @@ class Handler(BaseHTTPRequestHandler):
         
         print("Not translating, serving static content for path:", self.path)
 
-        if self.path == "/" or self.path == "":
+        if self.path == "/" or self.path == "" or self.path == "/index.wml" or self.path == "index.wml":
             body = indexWml
+            ctype = "text/vnd.wap.wml"
+        elif self.path == "/index2.wml" or self.path == "index2.wml":
+            body = index2Wml
             ctype = "text/vnd.wap.wml"
 
         elif self.path == "/logo.wbmp":
@@ -278,7 +302,7 @@ class Handler(BaseHTTPRequestHandler):
         elif self.path.startswith("/news.wml"):
             parsed = urlparse(self.path)
             params = parse_qs(parsed.query)
-            source = params.get("s", [""])[0]
+            source = params.get("source", [""])[0]
             return donews(self, source)
 
         elif self.path.startswith("/ic/"):

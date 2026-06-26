@@ -7,7 +7,7 @@
 		Temp: {TEMP_CELSIUS}C/{TEMP_FAHRENHEIT}F<br/>
 		Feels like: {FEEL_CELSIUS}C/{FEEL_FAHRENHEIT}F<br/>
 		Wind: {WINDSPEED}m/s<br/></p>
-		<i>the rest is in development</i>
+		<i>Local Time: {LOCAL_TIME}</i>
 		
 		<do type="accept" label="Ok">
 			<go href="/">

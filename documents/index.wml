@@ -5,31 +5,24 @@
 		<p align="center">Welcome to<br/>
 		<img src="logo.wbmp" alt="WolfWAP"/>
 		<br/>*****<br/></p>
-		<a href="#about">1> About</a><br/>
-		<a href="#news">2> News</a><br/>
-		<a href="#weather">3> Weather</a>
-		<a href="http://example.com">4> Example.com</a>
+		<a href="/index2.wml#about">1. About</a><br/>
+		<a href="/index2.wml#news">2. News</a><br/>
+		<a href="#weather">3. Weather</a><br/>
+		<a href="/index2.wml#links">4. Links</a><br/>
+		<a href="#browse">5. Browser</a>
     </card>
-	<card id="about" title="About">
-		<b>About<br/></b>
-		<p>WolfWAP is designed to be a modern WAP portal for mobile devices.
-		Unfortunately as WAP is a dead technology, all good WAP portals went
-		offline a long time ago. WolfWAP is designed to fill that gap and
-		provide a modern WAP experience with news, weather, and links to
-		relevant services. <br/></p>
-		<!--</p><b>WolfWAP also hosts a WAP gateway!</b><p><br/>
-		IP: 194.28.198.143
-		Port: 9201-->
+	<card id="browse" title="Open URL">
+        <p>Enter URL:</p>
+        <input name="u" title="URL"/>
 
-		<a href="#home">Home</a>
-	</card>
-	<card id="news" title="News">
-		<p>Please select news source</p>
-		<a href="/news.wml?source=bbc">1> BBC World</a><br/>
-		<a href="/news.wml?source=guard">2> The Guardian</a><br/>
-		<a href="/news.wml?source=ukr">3> Ukrainska Pravda</a><br/>
-		<a href="/">4> Back</a><br/>
-	</card>
+        <do type="accept" label="Go">
+            <go href="/HTML2WML">
+                <postfield name="url" value="$(u)"/>
+            </go>
+        </do>
+
+		<a href="index.wml#home">Home</a>
+    </card>
 	<card id="weather" title="Weather">
 		<p>Enter city in English (ie. Kyiv)<br/></p>
 		<input name="c" title="City"/>

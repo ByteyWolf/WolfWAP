@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<!DOCTYPE wml PUBLIC "-//WAPFORUM//DTD WML 1.1//EN" "http://www.wapforum.org/DTD/wml_1.1.xml">
+<wml xml:lang="en">
+	<card id="about" title="About">
+		<b>About<br/></b>
+		<p>WolfWAP is designed to be a modern WAP portal for mobile devices.
+		Unfortunately as WAP is a dead technology, all good WAP portals went
+		offline a long time ago. WolfWAP is designed to fill that gap and
+		provide a modern WAP experience with news, weather, and links to
+		relevant services. <br/></p>
+
+		<a href="index.wml#home">Home</a>
+	</card>
+	<card id="news" title="News">
+		<p>Please select news source</p>
+		<a href="/news.wml?source=bbc">1. BBC World</a><br/>
+		<a href="/news.wml?source=guard">2. The Guardian</a><br/>
+		<a href="/news.wml?source=ukr">3. Ukrainska Pravda</a><br/>
+		<a href="index.wml#home">4. Back</a><br/>
+	</card>
+	<card id="links" title="Links">
+		<p>Use these links to test your browser.</p>
+		<a href="http://example.com">1. Example.com</a><br/>
+		<a href="http://frogfind.com">2. FrogFind</a><br/>
+		<a href="http://en.wikipedia.org/wiki/Wolf">3. Wolf on Wikipedia</a><br/>
+		<a href="https://kannel.org/wap/main.wml">4. Kannel</a><br/>
+		<a href="/">5. Back</a><br/>
+	</card>
+</wml>
